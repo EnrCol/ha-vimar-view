@@ -1,6 +1,6 @@
 """Inventory helpers shared by discovery reconciliation and unit tests.
 
-Only devices owned exclusively by this config entry are eligible for cleanup.
+Only devices owned by this config entry are eligible for cleanup.
 The gateway and the energy-manager virtual device have non-numeric identifiers
 and are deliberately excluded.
 """
@@ -36,7 +36,7 @@ def stale_device_ids(
     stale: list[str] = []
 
     for device in registered_devices:
-        if set(device.config_entries) != {entry_id}:
+        if device.config_entry_id != entry_id:
             continue
         for identifier_domain, identifier in device.identifiers:
             if identifier_domain != domain or not identifier.startswith(prefix):

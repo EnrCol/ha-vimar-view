@@ -10,11 +10,11 @@ inventory = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(inventory)
 
 
-def make_device(device_id, identifiers, config_entries=("entry1",)):
+def make_device(device_id, identifiers, config_entry_id="entry1"):
     return SimpleNamespace(
         id=device_id,
         identifiers=set(identifiers),
-        config_entries=set(config_entries),
+        config_entry_id=config_entry_id,
     )
 
 
@@ -25,8 +25,8 @@ class InventoryTests(unittest.TestCase):
             make_device("removed", {("vimar_cloud", "entry1_11")}),
             make_device("gateway", {("vimar_cloud", "entry1")}),
             make_device("energy_manager", {("vimar_cloud", "entry1_energy_manager")}),
-            make_device("other_entry", {("vimar_cloud", "entry2_11")}, ("entry2",)),
-            make_device("shared", {("vimar_cloud", "entry1_11")}, ("entry1", "entry2")),
+            make_device("other_entry", {("vimar_cloud", "entry2_11")}, "entry2"),
+            make_device("wrong_owner", {("vimar_cloud", "entry1_11")}, "entry2"),
             make_device("homekit", {("homekit_controller", "entry1_11")}),
         ]
         self.assertEqual(

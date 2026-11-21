@@ -155,14 +155,17 @@ async def _remove_missing_registry_devices(
 ) -> None:
     """Remove exclusively-owned devices absent from two cloud inventories.
 
-    Never remove a gateway, a virtual energy manager or a device shared with
+    Never remove a gateway, a virtual energy manager or a device owned by
     another config entry. This includes user-disabled entities on removed
     physical devices, but preserves all user overrides on surviving IDs.
     """
     device_registry = dr.async_get(hass)
     entity_registry = er.async_get(hass)
+    registered_devices = dr.async_entries_for_config_entry(
+        device_registry, entry.entry_id
+    )
     stale_ids = stale_device_ids(
-        device_registry.devices.values(),
+        registered_devices,
         entry_id=entry.entry_id,
         discovered_idsfs=discovered_idsfs,
         domain=DOMAIN,
@@ -170,9 +173,8 @@ async def _remove_missing_registry_devices(
 
     # A partial cloud result must never wipe a substantial part of a home.
     registered_count = sum(
-        1 for device in device_registry.devices.values()
-        if set(device.config_entries) == {entry.entry_id}
-        and any(
+        1 for device in registered_devices
+        if any(
             domain == DOMAIN and identifier.startswith(f"{entry.entry_id}_")
             and identifier[len(entry.entry_id) + 1:].isascii()
             and identifier[len(entry.entry_id) + 1:].isdecimal()
@@ -190,7 +192,7 @@ async def _remove_missing_registry_devices(
     for device_id in stale_ids:
         # Re-check ownership immediately before the irreversible operation.
         device = device_registry.async_get(device_id)
-        if device is None or set(device.config_entries) != {entry.entry_id}:
+        if device is None or device.config_entry_id != entry.entry_id:
             continue
 
         affected = [
