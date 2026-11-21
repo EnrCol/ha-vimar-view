@@ -14,7 +14,7 @@ from .api import VimarCloudClient
 from .const import CONF_DUID, CONF_PLANT_UID, CONF_REFRESH_TOKEN, DOMAIN
 from .device_info import gateway_device_info
 from .gateway_log import GatewayLogWatcher
-from .inventory import inventory_signature, stale_device_ids
+from .inventory import inventory_signature, stale_device_ids, is_conservative_cleanup
 from .routines import RoutineTracker
 from .services import async_register_services
 from .telemetry import TelemetryManager
@@ -167,6 +167,25 @@ async def _remove_missing_registry_devices(
         discovered_idsfs=discovered_idsfs,
         domain=DOMAIN,
     )
+
+    # A partial cloud result must never wipe a substantial part of a home.
+    registered_count = sum(
+        1 for device in device_registry.devices.values()
+        if set(device.config_entries) == {entry.entry_id}
+        and any(
+            domain == DOMAIN and identifier.startswith(f"{entry.entry_id}_")
+            and identifier[len(entry.entry_id) + 1:].isascii()
+            and identifier[len(entry.entry_id) + 1:].isdecimal()
+            for domain, identifier in device.identifiers
+        )
+    )
+    if stale_ids and not is_conservative_cleanup(len(stale_ids), registered_count):
+        _LOGGER.warning(
+            "Vimar: refusing bulk registry cleanup (%d stale of %d physical devices). "
+            "Review the cloud inventory before removing any devices.",
+            len(stale_ids), registered_count,
+        )
+        return
 
     for device_id in stale_ids:
         # Re-check ownership immediately before the irreversible operation.
