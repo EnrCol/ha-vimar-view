@@ -62,6 +62,15 @@ class InventoryTests(unittest.TestCase):
             ["absent"],
         )
 
+    def test_bulk_cleanup_guard(self):
+        self.assertTrue(inventory.is_conservative_cleanup(1, 38))
+        self.assertTrue(inventory.is_conservative_cleanup(2, 38))
+        self.assertFalse(inventory.is_conservative_cleanup(3, 38))
+        self.assertFalse(inventory.is_conservative_cleanup(1, 5))
+        self.assertFalse(inventory.is_conservative_cleanup(12, 38))
+        self.assertFalse(inventory.is_conservative_cleanup(0, 38))
+        self.assertFalse(inventory.is_conservative_cleanup(1, 0))
+
     def test_signature_detects_name_type_and_feature_changes(self):
         devices = {42: {
             "name": "Presa Ext", "device_type": "automation_switch",
