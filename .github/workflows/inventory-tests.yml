@@ -23,4 +23,6 @@ jobs:
       - name: Compile Python sources
         run: python -m compileall -q custom_components/vimar_cloud tests
       - name: Run discovery and registry tests
-        run: python -m unittest discover -s tests -v
+        run: |
+          python -m unittest discover -s tests -p 'test_cloud_discovery.py' -v
+          python -m unittest discover -s tests -p 'test_inventory.py' -v
