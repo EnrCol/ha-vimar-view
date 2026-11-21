@@ -47,3 +47,15 @@ def stale_device_ids(
                 break
 
     return sorted(set(stale))
+
+def is_conservative_cleanup(stale_count: int, registered_count: int) -> bool:
+    """Allow at most two removals and no more than 10% of registered devices.
+
+    Protect against accidentally treating a cloud-side partial inventory
+    as a deletion event. Bulk removals require explicit manual inspection.
+    """
+    return (
+        0 < stale_count <= 2
+        and registered_count > 0
+        and stale_count * 10 <= registered_count
+    )
